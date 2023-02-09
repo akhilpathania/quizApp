@@ -1,14 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"quizapp/src/package/db_conn"
+	"quizapp/src/package/routers"
+	"sync"
 )
 
 func main() {
-	db, err := db_conn.InitDB()
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer db.Close()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go routers.Init()
+
+	wg.Wait()
 }

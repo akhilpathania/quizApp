@@ -3,6 +3,7 @@ package routers
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 
 	"encoding/json"
@@ -29,8 +30,28 @@ func Init() {
 
 	router.HandleFunc("/", Index).Methods("GET")
 	router.HandleFunc("/signup", Signup).Methods("POST")
+	router.HandleFunc("/shutServer", shutServer).Methods("POST")
 
-	http.ListenAndServe(":5000", router)
+	server := &http.Server{
+		Addr:    ":5000",
+		Handler: router,
+	}
+
+	//http.ListenAndServe(":5000", router)
+	go func() {
+		log.Fatal(server.ListenAndServe())
+	}()
+	log.Println("server started")
+
+	// stopC := make(chan, os.Interrupt)
+	// signal.Notify(stopC, os.Interrupt)
+	// <-stopC
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// log.Println("server stopping...")
+	// defer cancel()
+
+	// log.Fatal(server.Shutdown(ctx))
 }
 
 func Index(q http.ResponseWriter, r *http.Request) {
@@ -46,5 +67,15 @@ func Signup(q http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Password = utilities.GeneratePassword(user.Password)
-	
+	q.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(q).Encode(user)
+	err := db_conn.InsertStmt(user, db)
+	if err != nil {
+		log.Println(err)
+	}
+
+}
+
+func shutServer(q http.ResponseWriter, r *http.Request) {
+
 }
